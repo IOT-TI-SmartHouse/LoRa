@@ -1,24 +1,12 @@
-Hum 0-100 		99.9    -> 8 bits + 4b = 12b
-Temp -40-125 	124.9   -> 8 bits + 4b = 12b
-										 24b = 3B
+Hum 0-100 		99.99  		-> 8 bits + 8b = 16b
+Temp -40-125 		124.99   	-> 8 bits + 8b = 16b
+							 32b = 4B
 										 
 Payload :
 
+     Humidity        |     Temperature 
+[0000 0000 0000 0000] [0000 0000 0000 0000]
+[_________][________] [_________][________]
+ = first 2, second 2   = first 2, second 2
 
- Humidity  | Temperature | Humidity precision | Temperature precision
-[0000 0000]	 [0000 0000] 	    [0000] 		 	 	   [0000]
- 
- 
-Example:
- payload : LxQk
- Hex     : 2F1424
- binary  : 0010 1111 0001 0100 0010 0100
- 
- [0010 1111] [0001 0100]  		[0010] 				   [0100]
- 
-=	 48			 20				   2					  4
-
-= 	{
-		Humidity   : 48.2
-		Temperature: 20.4
-	}
+Read 2 ints as int16 and devide by 100 to get decimal value.
