@@ -41,8 +41,8 @@
 #endif
 
 int reading;
-int tempPin = 7;
-int humPin = 3;
+int tempPin = 1;
+int humPin = 0;
 
 // This EUI must be in little-endian format, so least-significant-byte
 // first. When copying an EUI from ttnctl output, this means to reverse
@@ -79,7 +79,7 @@ const lmic_pinmap lmic_pins = {
 
 double analogToTemperature(int analogValue)
 {
-    double analogtoV = analogValue * 0.0008056640625;
+    double analogtoV = analogValue * 0.003225806;
 
     Serial.print("Voltage TEMP A: ");
     Serial.print(analogtoV);
@@ -90,7 +90,7 @@ double analogToTemperature(int analogValue)
 
 double analogToHumidity(int analogValue)
 {
-    double analogtoV = analogValue * 0.00008056640625;
+    double analogtoV = analogValue * 0.003225806;
     Serial.print("Voltage HUM A: ");
     Serial.print(analogtoV);
     Serial.println("");
@@ -107,9 +107,8 @@ void do_send(osjob_t *j)
     }
     else
     {
-        // Prepare upstream data transmission at the next possible time.
-        double temperatureAnalog = analogRead(tempPin);
-        double humidityAnalog = analogRead(humPin);
+        int temperatureAnalog = analogRead(tempPin);
+        int humidityAnalog = analogRead(humPin);
 
         Serial.print("READ TEMP A: ");
         Serial.print(temperatureAnalog);
@@ -132,7 +131,6 @@ void do_send(osjob_t *j)
         Serial.println(temperatureValue);
         Serial.print("HUM: ");
         Serial.println(humidityValue);
-
         Serial.println("");
     }
     // Next TX is scheduled after TX_COMPLETE event.
@@ -148,17 +146,16 @@ void setup()
     pinMode(tempPin, INPUT);
     pinMode(humPin, INPUT);
 
-
     // Prepare upstream data transmission at the next possible time.
 
     // LMIC init
-    // os_init();
+    os_init();
     // Reset the MAC state. Session and pending data transfers will be discarded.
-    // LMIC_reset();
-    // LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100);
+    LMIC_reset();
+    LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100);
 
-    // // Start job (sending automatically starts OTAA too)
-    // do_send(&sendjob);
+    // Start job (sending automatically starts OTAA too)
+    do_send(&sendjob);
 }
 
 void onEvent(ev_t ev)
@@ -184,7 +181,6 @@ void onEvent(ev_t ev)
         break;
     case EV_JOINED:
         Serial.println(F("EV_JOINED"));
-
         // Disable link check validation (automatically enabled
         // during join, but not supported by TTN at this time).
         LMIC_setLinkCheckMode(0);
@@ -212,7 +208,6 @@ void onEvent(ev_t ev)
         // Schedule next transmission
         Watchdog.sleep(SLEEP_TIME);
         os_setCallback(&sendjob, do_send);
-        //os_setTimedCallback(&sendjob, os_getTime()+sec2osticks(TX_INTERVAL), do_send);
         break;
     case EV_LOST_TSYNC:
         Serial.println(F("EV_LOST_TSYNC"));
@@ -238,33 +233,5 @@ void onEvent(ev_t ev)
 
 void loop()
 {
-    // os_runloop_once();
-    int temperatureAnalog = analogRead(tempPin);
-    int humidityAnalog = analogRead(humPin);
-
-    Serial.print("READ TEMP A: ");
-    Serial.print(temperatureAnalog);
-    Serial.println("");
-    Serial.print("READ HUM A: ");
-    Serial.print(humidityAnalog);
-    Serial.println("");
-
-    float temperatureValue = analogToTemperature(temperatureAnalog);
-    float humidityValue = analogToHumidity(humidityAnalog);
-
-    LoraMessage message;
-
-    message.addHumidity(humidityValue);
-    message.addTemperature(temperatureValue);
-
-    //    LMIC_setTxData2(1, message.getBytes(), message.getLength(), 0);
-    Serial.println(F("Packet queued"));
-    Serial.print("TEMP: ");
-    Serial.println(temperatureValue);
-    Serial.print("HUM: ");
-    Serial.println(humidityValue);
-
-    Serial.println("");
-
-    delay(5000);
+    os_runloop_once();
 }
